@@ -1,0 +1,6 @@
+{
+  "name": "Project Sentinel AI",
+  "description": "AI-powered infrastructure project early warning and predictive risk analytics system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
