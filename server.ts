@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express, { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -5,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { createServer as createViteServer } from 'vite';
 import { db } from './server/database/db';
+import { chatWithPortfolio } from './server/ai/geminiService';
 import {
   parseCSVData,
   parseExcelBuffer,
@@ -562,6 +565,29 @@ async function startServer() {
   app.post('/api/predict/simulate', handleSimulate);
   app.post('/predict/simulate', handleSimulate);
 
+  // 11. POST /api/chat and POST /chat (Dynamic Gemini AI Assistant)
+  const handleChat = async (req: Request, res: Response) => {
+    try {
+      const { message, history = [], currentProjectId } = req.body;
+      if (!message || typeof message !== 'string' || !message.trim()) {
+        return res.status(400).json({ error: 'Message is required and cannot be empty.' });
+      }
+
+      console.log(`[Chat Endpoint] User query: "${message.slice(0, 60)}" (history: ${history.length} turns, project: ${currentProjectId || 'portfolio'})`);
+      const result = await chatWithPortfolio(message, history, currentProjectId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[Chat Endpoint Error]:', err.message || err);
+      const isConfigError = String(err.message || '').includes('API_KEY is missing');
+      return res.status(isConfigError ? 400 : 500).json({
+        error: err.message || 'An error occurred while communicating with the AI service.',
+        code: isConfigError ? 'MISSING_API_KEY' : 'AI_SERVICE_ERROR',
+      });
+    }
+  };
+  app.post('/api/chat', handleChat);
+  app.post('/chat', handleChat);
+
   // Vite middleware setup
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
@@ -579,6 +605,12 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Project Sentinel AI Full-Stack Server running on port ${PORT}`);
+    const key = (process.env.API_KEY || process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY)?.trim();
+    if (key && !key.startsWith('MY_') && !key.startsWith('YOUR_')) {
+      console.log(`[AI Service] Initialized with API key (${key.substring(0, 6)}... configured)`);
+    } else {
+      console.warn(`[AI Service] WARNING: API_KEY is not set or using placeholder in .env`);
+    }
   });
 }
 

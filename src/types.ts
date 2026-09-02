@@ -193,3 +193,34 @@ export interface ValidationResult {
   errors: ValidationError[];
   preview: any[];
 }
+
+export interface SuggestedProject {
+  id: string;
+  project_code: string;
+  project_name: string;
+  sector: string;
+  risk_level: RiskLevel;
+  risk_score: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  timestamp: string;
+  suggestedProjects?: SuggestedProject[];
+  isError?: boolean;
+}
+
+export interface ChatRequest {
+  message: string;
+  history?: Array<{ role: 'user' | 'model'; text: string }>;
+  currentProjectId?: string;
+}
+
+export interface ChatResponse {
+  reply: string;
+  suggestedProjects: SuggestedProject[];
+  model_used: string;
+}
+

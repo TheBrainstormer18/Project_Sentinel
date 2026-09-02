@@ -66,6 +66,19 @@ export const Header: React.FC<HeaderProps> = ({
           <span>MoSPI / PAIMANA</span>
         </div>
 
+        {/* AI Assistant Quick Trigger */}
+        <button
+          onClick={() => {
+            const btn = document.getElementById('btn-open-ai-assistant');
+            if (btn) btn.click();
+          }}
+          id="header-ai-assistant-btn"
+          className="hidden sm:flex items-center gap-1.5 rounded-full border border-indigo-200/80 bg-gradient-to-r from-indigo-50 to-blue-50 px-3 py-1 text-xs font-bold text-indigo-700 hover:border-indigo-300 hover:shadow-xs transition-all"
+        >
+          <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+          <span>AI Assistant</span>
+        </button>
+
         {/* High Risk Alert Badge */}
         {highRiskCount > 0 && (
           <Link

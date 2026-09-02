@@ -12,6 +12,7 @@ import { Login } from './pages/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { fetchDashboard } from './services/api';
+import { AIAssistantChat } from './components/AIAssistantChat';
 
 function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
@@ -110,6 +111,9 @@ function MainLayout() {
           </Routes>
         </main>
       </div>
+
+      {/* Floating AI Assistant */}
+      <AIAssistantChat />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   ProjectMonitoringData,
   User,
   ValidationResult,
+  ChatResponse,
 } from '../types';
 
 const BASE_URL = '/api';
@@ -254,3 +255,26 @@ export async function simulatePrediction(scenario: {
   if (!res.ok) throw new Error('Simulation failed');
   return res.json();
 }
+
+export async function sendChatMessage(
+  message: string,
+  history: Array<{ role: 'user' | 'model'; text: string }> = [],
+  currentProjectId?: string
+): Promise<ChatResponse> {
+  const res = await fetch(`${BASE_URL}/chat`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      message,
+      history,
+      currentProjectId,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to communicate with AI Assistant');
+  }
+  return data;
+}
+
