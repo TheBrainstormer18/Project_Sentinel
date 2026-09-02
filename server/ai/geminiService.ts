@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { db } from '../database/db';
-import { SuggestedProject } from '../../src/types';
+import { Project, SuggestedProject } from '../../src/types';
 
 // Google direct models
 const GOOGLE_MODELS = [
@@ -30,15 +30,15 @@ export interface ChatServiceResponse {
 /**
  * Builds factual system instruction context from the live database
  */
-function buildSystemInstruction(currentProjectId?: string): string {
-  const projects = db.getAllProjects();
-  const alerts = db.getAllAlerts();
-  const summary = db.getDashboardSummary();
+async function buildSystemInstruction(currentProjectId?: string, user?: any): Promise<string> {
+  const projects = await db.getAllProjects(user);
+  const alerts = await db.getAllAlerts(user);
+  const summary = await db.getDashboardSummary(user);
 
   // Highlight specific project if requested
   let activeProjectContext = '';
   if (currentProjectId) {
-    const pDetail = db.getProjectById(currentProjectId);
+    const pDetail = await db.getProjectById(currentProjectId, user);
     if (pDetail) {
       const p = pDetail.project;
       activeProjectContext = `
@@ -115,9 +115,9 @@ ${activeAlerts}
 function extractSuggestedProjects(
   query: string,
   reply: string,
+  allProjects: Project[],
   currentProjectId?: string
 ): SuggestedProject[] {
-  const allProjects = db.getAllProjects();
   const candidates: SuggestedProject[] = [];
   const addedIds = new Set<string>();
 
@@ -317,23 +317,25 @@ async function callGoogleGenAI(
 export async function chatWithPortfolio(
   message: string,
   history: ChatHistoryItem[] = [],
-  currentProjectId?: string
+  currentProjectId?: string,
+  user?: any
 ): Promise<ChatServiceResponse> {
   const apiKey = (
+    process.env.OPENROUTER_API_KEY ||
     process.env.API_KEY ||
     process.env.GEMINI_API_KEY ||
-    process.env.OPENROUTER_API_KEY ||
     ''
   ).trim();
 
   if (!apiKey || apiKey === 'MY_API_KEY' || apiKey === 'YOUR_API_KEY_HERE' || apiKey === 'MY_GEMINI_API_KEY') {
     const errorMsg =
-      'API_KEY is missing or unconfigured. Please provide a valid API key in your .env file (API_KEY=your_key).';
+      'OPENROUTER_API_KEY / API_KEY is missing or unconfigured. Please provide a valid API key in your environment variables.';
     console.error('[AI Service Config Error]:', errorMsg);
     throw new Error(errorMsg);
   }
 
-  const systemInstruction = buildSystemInstruction(currentProjectId);
+  const allProjects = await db.getAllProjects(user);
+  const systemInstruction = await buildSystemInstruction(currentProjectId, user);
   const isOpenRouter = apiKey.startsWith('sk-or-');
 
   console.log(`[AI Service] Routing request via ${isOpenRouter ? 'OpenRouter API' : 'Google GenAI SDK'}...`);
@@ -347,7 +349,7 @@ export async function chatWithPortfolio(
   }
 
   const replyText = responseData.text || 'I processed your query against the project portfolio, but received an empty response. Please ask again.';
-  const suggestedProjects = extractSuggestedProjects(message, replyText, currentProjectId);
+  const suggestedProjects = extractSuggestedProjects(message, replyText, allProjects, currentProjectId);
 
   return {
     reply: replyText,
@@ -355,3 +357,4 @@ export async function chatWithPortfolio(
     model_used: responseData.model_used,
   };
 }
+

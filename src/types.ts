@@ -15,6 +15,8 @@ export interface Project {
   project_status: 'On-Going' | 'Delayed' | 'Under Risk' | 'Completed' | 'Tendering';
   data_source: DataSource;
   created_at: string;
+  assigned_to?: string | null;
+  is_demo?: boolean;
   
   // Latest computed metrics
   latest_monitoring?: ProjectMonitoringData;
@@ -224,3 +226,26 @@ export interface ChatResponse {
   model_used: string;
 }
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  created_at: string;
+}
+
+export interface CreateProjectPayload {
+  project_name: string;
+  project_code: string;
+  sector: string;
+  ministry: string;
+  implementing_agency: string;
+  state: string;
+  original_cost: number;
+  revised_cost: number;
+  expenditure: number;
+  physical_progress: number;
+  original_completion_date: string;
+  revised_completion_date: string;
+  assigned_to?: string | null;
+}

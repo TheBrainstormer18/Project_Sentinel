@@ -15,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   newAlertCount = 0,
 }) => {
   const navigate = useNavigate();
-  const { user, isAdmin, logout, switchRoleDemo } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const [searchVal, setSearchVal] = React.useState('');
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -136,18 +136,6 @@ export const Header: React.FC<HeaderProps> = ({
                 {user.role}
               </span>
             </div>
-
-            {/* Quick Role Switcher for Hackathon Demo */}
-            <button
-              type="button"
-              id="btn-header-switch-role"
-              onClick={() => switchRoleDemo(isAdmin ? 'officer' : 'admin')}
-              className="hidden md:flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-              title={`Switch to ${isAdmin ? 'Monitoring Officer' : 'Administrator'} demo mode`}
-            >
-              <RefreshCw className="h-3 w-3 text-slate-400" />
-              <span>Switch to {isAdmin ? 'Officer' : 'Admin'}</span>
-            </button>
           </div>
         ) : (
           <Link

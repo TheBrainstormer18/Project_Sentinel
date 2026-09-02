@@ -8,6 +8,9 @@ import {
   Project,
   ProjectMonitoringData,
   User,
+  UserRole,
+  UserProfile,
+  CreateProjectPayload,
   ValidationResult,
   ChatResponse,
 } from '../types';
@@ -274,6 +277,54 @@ export async function sendChatMessage(
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data.error || 'Failed to communicate with AI Assistant');
+  }
+  return data;
+}
+
+// ----------------------------------------------------
+// Project Management API (Admin only)
+// ----------------------------------------------------
+
+export async function createProject(payload: CreateProjectPayload): Promise<Project> {
+  const res = await fetch(`${BASE_URL}/projects`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to create project');
+  }
+  return data;
+}
+
+// ----------------------------------------------------
+// User Management API (Admin only)
+// ----------------------------------------------------
+
+export async function fetchUsers(): Promise<UserProfile[]> {
+  const res = await fetch(`${BASE_URL}/admin/users`, {
+    headers: getAuthHeaders(),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to fetch user list');
+  }
+  return data;
+}
+
+export async function updateUserRole(userId: string, role: UserRole): Promise<UserProfile> {
+  const res = await fetch(`${BASE_URL}/admin/users/${userId}/role`, {
+    method: 'PATCH',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ role }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to update user role');
   }
   return data;
 }

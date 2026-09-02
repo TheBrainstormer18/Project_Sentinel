@@ -9,6 +9,8 @@ import { EarlyWarnings } from './pages/EarlyWarnings';
 import { ModelInsights } from './pages/ModelInsights';
 import { DataUpload } from './pages/DataUpload';
 import { Login } from './pages/Login';
+import { ResetPassword } from './pages/ResetPassword';
+import { UserManagement } from './pages/UserManagement';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { fetchDashboard } from './services/api';
@@ -107,6 +109,15 @@ function MainLayout() {
                 </ProtectedRoute>
               }
             />
+            {/* RBAC: Only Admin can access User Management */}
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <UserManagement />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -124,6 +135,7 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/*" element={<MainLayout />} />
         </Routes>
       </AuthProvider>

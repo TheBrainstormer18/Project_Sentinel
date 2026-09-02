@@ -13,6 +13,7 @@ import {
   UserCheck,
   ShieldCheck,
   RefreshCw,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -29,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
   onToggle,
 }) => {
-  const { user, isAdmin, isOfficer, logout, switchRoleDemo } = useAuth();
+  const { user, isAdmin, isOfficer, logout } = useAuth();
   const navigate = useNavigate();
 
   const allNavItems = [
@@ -76,6 +77,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badgeColor: 'bg-indigo-900/60 text-indigo-200 border-indigo-700/50',
       adminOnly: true,
       description: 'Data ingestion & validation pipeline',
+    },
+    {
+      name: 'User Management',
+      path: '/users',
+      icon: Users,
+      badge: 'Admin Only',
+      badgeColor: 'bg-indigo-900/60 text-indigo-200 border-indigo-700/50',
+      adminOnly: true,
+      description: 'Role permissions & officer directory',
     },
   ];
 
@@ -209,19 +219,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </span>
                 </div>
 
-                {/* Role Switcher & Logout Controls */}
-                <div className="mt-2.5 flex items-center justify-between border-t border-slate-700/60 pt-2 text-[10px]">
-                  <button
-                    type="button"
-                    id="btn-switch-demo-role"
-                    onClick={() => switchRoleDemo(isAdmin ? 'officer' : 'admin')}
-                    className="flex items-center gap-1 font-medium text-slate-400 hover:text-blue-300 transition-colors"
-                    title="Switch role for demo testing"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                    <span>Switch to {isAdmin ? 'Officer' : 'Admin'}</span>
-                  </button>
-
+                {/* Logout Controls */}
+                <div className="mt-2.5 flex items-center justify-end border-t border-slate-700/60 pt-2 text-[10px]">
                   <button
                     type="button"
                     id="btn-sidebar-logout"
