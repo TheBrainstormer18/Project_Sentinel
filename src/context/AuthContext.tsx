@@ -225,32 +225,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginDemo = async () => {
     setLoading(true);
+    let demoUser: User = {
+      id: 'usr-demo',
+      name: 'Demo Officer',
+      email: 'demo@projectsentinel.ai',
+      role: 'officer',
+      created_at: new Date().toISOString(),
+    };
+    let demoToken = 'demo-session-token';
+
     try {
       const res = await fetch('/api/auth/demo-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Demo login failed');
-      }
 
-      if (data.access_token && data.refresh_token && data.access_token !== 'demo-local-fallback-token') {
-        // Sync real Supabase Auth session on the client
-        try {
-          await supabase.auth.setSession({
-            access_token: data.access_token,
-            refresh_token: data.refresh_token,
-          });
-        } catch (sbErr) {
-          console.warn('[AuthContext] Supabase setSession notice:', sbErr);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          demoUser = data.user;
         }
+        if (data.access_token) {
+          demoToken = data.access_token;
+          if (data.refresh_token && data.access_token !== 'demo-local-fallback-token') {
+            try {
+              await supabase.auth.setSession({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token,
+              });
+            } catch (sbErr) {
+              console.warn('[AuthContext] Supabase setSession notice:', sbErr);
+            }
+          }
+        }
+      } else {
+        console.warn('[AuthContext] /api/auth/demo-login returned non-OK status, falling back to local demo session.');
       }
-
-      setUser(data.user);
-      setToken(data.access_token);
-      saveAuthSession(data.access_token, data.user);
+    } catch (err) {
+      console.warn('[AuthContext] Backend demo login endpoint unreachable, falling back to instant demo session:', err);
     } finally {
+      setUser(demoUser);
+      setToken(demoToken);
+      saveAuthSession(demoToken, demoUser);
       setLoading(false);
     }
   };
