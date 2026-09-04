@@ -11,25 +11,30 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
-import { fetchUsers, updateUserRole } from '../services/api';
-import { UserProfile, UserRole } from '../types';
+import { fetchUsers, updateUserRole, fetchProjects } from '../services/api';
+import { UserProfile, UserRole, Project } from '../types';
 import { useAuth } from '../context/AuthContext';
 
 export const UserManagement: React.FC = () => {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const loadUsers = async () => {
+  const loadData = async () => {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const data = await fetchUsers();
-      setUsers(data);
+      const [usersData, projectsData] = await Promise.all([
+        fetchUsers(),
+        fetchProjects().catch(() => []),
+      ]);
+      setUsers(usersData);
+      setProjects(projectsData);
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to fetch user list');
     } finally {
@@ -38,7 +43,7 @@ export const UserManagement: React.FC = () => {
   };
 
   useEffect(() => {
-    loadUsers();
+    loadData();
   }, []);
 
   const handleRoleChange = async (targetUser: UserProfile, newRole: UserRole) => {
@@ -95,7 +100,7 @@ export const UserManagement: React.FC = () => {
         </div>
 
         <button
-          onClick={loadUsers}
+          onClick={loadData}
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs transition-all disabled:opacity-50"
         >
@@ -157,21 +162,22 @@ export const UserManagement: React.FC = () => {
                 <th className="py-3.5 px-4 sm:px-6">Officer Name</th>
                 <th className="py-3.5 px-4 sm:px-6">Email Address</th>
                 <th className="py-3.5 px-4 sm:px-6">Current Role</th>
+                <th className="py-3.5 px-4 sm:px-6">Assigned Projects</th>
                 <th className="py-3.5 px-4 sm:px-6">Registration Date</th>
-                <th className="py-3.5 px-4 sm:px-6 text-right">Role Authorization</th>
+                <th className="py-3.5 px-4 sm:px-6 text-right">Role Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
                     <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent mb-2" />
                     <p>Loading registered profiles from Supabase...</p>
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
                     No registered user accounts found matching your search.
                   </td>
                 </tr>
@@ -179,6 +185,7 @@ export const UserManagement: React.FC = () => {
                 filteredUsers.map((u) => {
                   const isSelf = u.id === currentUser?.id;
                   const isUpdating = updatingId === u.id;
+                  const userProjects = projects.filter((p) => p.assigned_to === u.id);
 
                   return (
                     <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
@@ -207,6 +214,21 @@ export const UserManagement: React.FC = () => {
                             <UserCheck className="h-3 w-3 text-emerald-600" />
                             <span>Monitoring Officer</span>
                           </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 sm:px-6">
+                        {u.role === 'admin' ? (
+                          <span className="text-[11px] font-semibold text-slate-500 italic">
+                            Portfolio-Wide (All)
+                          </span>
+                        ) : userProjects.length > 0 ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center rounded-md bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-bold text-blue-700">
+                              {userProjects.length} {userProjects.length === 1 ? 'Project' : 'Projects'}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-slate-400">0 Assigned</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4 sm:px-6 text-slate-500">

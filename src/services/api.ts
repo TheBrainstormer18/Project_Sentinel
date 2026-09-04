@@ -299,6 +299,20 @@ export async function createProject(payload: CreateProjectPayload): Promise<Proj
   return data;
 }
 
+export async function updateProject(id: string, updates: Partial<Project>): Promise<Project> {
+  const res = await fetch(`${BASE_URL}/projects/${id}`, {
+    method: 'PATCH',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(updates),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to update project');
+  }
+  return data.project || data;
+}
+
 // ----------------------------------------------------
 // User Management API (Admin only)
 // ----------------------------------------------------

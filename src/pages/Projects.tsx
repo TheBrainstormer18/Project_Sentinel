@@ -18,7 +18,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react';
-import { fetchProjects, createProject, fetchUsers } from '../services/api';
+import { fetchProjects, createProject, fetchUsers, updateProject } from '../services/api';
 import { Project, RiskLevel, UserProfile } from '../types';
 import { RiskBadge } from '../components/RiskBadge';
 import { useAuth } from '../context/AuthContext';
@@ -84,12 +84,35 @@ export const Projects: React.FC = () => {
     }
   };
 
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
   const loadOfficers = async () => {
     try {
       const allUsers = await fetchUsers();
       setOfficers(allUsers.filter((u) => u.role === 'officer'));
     } catch {
       // Fallback
+    }
+  };
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadOfficers();
+    }
+  }, [isAdmin]);
+
+  const handleReassignOfficer = async (projectId: string, officerId: string) => {
+    try {
+      setUpdatingId(projectId);
+      const targetVal = officerId.trim() ? officerId.trim() : null;
+      await updateProject(projectId, { assigned_to: targetVal });
+      setProjects((prev) =>
+        prev.map((p) => (p.id === projectId ? { ...p, assigned_to: targetVal } : p))
+      );
+    } catch (err: any) {
+      alert(err.message || 'Failed to reassign officer');
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -191,13 +214,15 @@ export const Projects: React.FC = () => {
             </button>
           )}
 
-          <Link
-            to="/upload"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Import Data</span>
-          </Link>
+          {isAdmin && (
+            <Link
+              to="/upload"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Import Data</span>
+            </Link>
+          )}
           <button
             onClick={loadProjects}
             className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50 transition-colors"
@@ -254,19 +279,28 @@ export const Projects: React.FC = () => {
             </select>
           </div>
 
-          {/* Risk Level Filter */}
-          <div className="flex items-center gap-1">
-            <span className="text-[11px] text-slate-500">Risk Level:</span>
-            <select
-              value={selectedRisk}
-              onChange={(e) => setSelectedRisk(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-blue-500 focus:outline-hidden"
-            >
-              <option value="ALL">All Risk Levels</option>
-              <option value="HIGH">High Risk Only</option>
-              <option value="MEDIUM">Medium Risk Only</option>
-              <option value="LOW">Low Risk Only</option>
-            </select>
+          {/* Quick Risk Filters */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-slate-500">Quick Risk:</span>
+            {[
+              { id: 'ALL', label: 'All', color: 'border-slate-200 text-slate-700 hover:bg-slate-50' },
+              { id: 'HIGH', label: '🔴 High', color: 'border-rose-200 text-rose-700 bg-rose-50/50 hover:bg-rose-100/60' },
+              { id: 'MEDIUM', label: '🟠 Medium', color: 'border-amber-200 text-amber-700 bg-amber-50/50 hover:bg-amber-100/60' },
+              { id: 'LOW', label: '🟢 Low', color: 'border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/60' },
+            ].map((btn) => (
+              <button
+                key={btn.id}
+                type="button"
+                onClick={() => setSelectedRisk(btn.id)}
+                className={`rounded-lg px-2.5 py-1 text-xs font-bold border transition-all ${
+                  selectedRisk === btn.id
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                    : btn.color
+                }`}
+              >
+                {btn.label}
+              </button>
+            ))}
           </div>
 
           {/* Sort By */}
@@ -318,6 +352,7 @@ export const Projects: React.FC = () => {
                   <th className="py-3.5 px-4">Cost Telemetry (Cr)</th>
                   <th className="py-3.5 px-4">Physical vs Fin</th>
                   <th className="py-3.5 px-4">AI Risk Score</th>
+                  <th className="py-3.5 px-4">Assigned Officer</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -392,6 +427,38 @@ export const Projects: React.FC = () => {
                           score={pred?.risk_score}
                           size="md"
                         />
+                      </td>
+                      <td className="py-4 px-4">
+                        {isAdmin ? (
+                          <div className="flex items-center gap-1.5">
+                            <select
+                              value={p.assigned_to || ''}
+                              disabled={updatingId === p.id}
+                              onChange={(e) => handleReassignOfficer(p.id, e.target.value)}
+                              className="rounded-lg border border-slate-200 bg-white py-1 px-2 text-[11px] font-medium text-slate-700 focus:border-indigo-500 focus:outline-hidden max-w-[145px] truncate"
+                              title="Assign or reassign officer"
+                            >
+                              <option value="">Unassigned</option>
+                              {officers.map((off) => (
+                                <option key={off.id} value={off.id}>
+                                  {off.name}
+                                </option>
+                              ))}
+                            </select>
+                            {updatingId === p.id && (
+                              <RefreshCw className="h-3 w-3 animate-spin text-indigo-600 shrink-0" />
+                            )}
+                          </div>
+                        ) : p.is_demo ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                            Demo Portfolio
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                            <UserCheck className="h-3 w-3" />
+                            <span>Assigned to You</span>
+                          </span>
+                        )}
                       </td>
                       <td className="py-4 px-4 text-right">
                         <Link

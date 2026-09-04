@@ -89,9 +89,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
-  // RBAC: Monitoring Officer sees only non-admin routes
+  // RBAC: Only Administrator sees adminOnly routes
   const visibleNavItems = allNavItems.filter((item) => {
-    if (item.adminOnly && isOfficer) return false;
+    if (item.adminOnly && !isAdmin) return false;
     return true;
   });
 

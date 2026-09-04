@@ -139,6 +139,15 @@ export class SentinelDatabase {
 
       if (pErr || !projectRow) return null;
 
+      // Access control: officers can only see their assigned project (or demo projects if demo user)
+      if (user && user.role !== 'admin') {
+        if (this.isDemoUser(user)) {
+          if (!projectRow.is_demo) return null;
+        } else {
+          if (projectRow.assigned_to !== user.id) return null;
+        }
+      }
+
       // Fetch full monitoring history
       const { data: monitoringRows, error: mErr } = await supabaseAdmin
         .from('project_monitoring')
@@ -388,6 +397,67 @@ export class SentinelDatabase {
       prediction: riskResult.prediction,
       alerts: riskResult.alerts,
     };
+  }
+
+  /**
+   * Updates project metadata or officer assignment (Admin only)
+   */
+  public async updateProject(
+    id: string,
+    updates: {
+      project_name?: string;
+      sector?: string;
+      ministry?: string;
+      implementing_agency?: string;
+      state?: string;
+      assigned_to?: string | null;
+      project_status?: Project['project_status'];
+    }
+  ): Promise<Project | null> {
+    if (!isSupabaseConfigured) {
+      const existing = this.fallbackProjects.get(id);
+      if (!existing) return null;
+      const updated: Project = {
+        ...existing,
+        ...updates,
+        project_status: (updates.project_status || existing.project_status) as Project['project_status'],
+      };
+      this.fallbackProjects.set(id, updated);
+      return updated;
+    }
+
+    try {
+      const payload: any = {};
+      if (updates.project_name !== undefined) payload.project_name = updates.project_name;
+      if (updates.sector !== undefined) payload.sector = updates.sector;
+      if (updates.ministry !== undefined) payload.ministry = updates.ministry;
+      if (updates.implementing_agency !== undefined) payload.implementing_agency = updates.implementing_agency;
+      if (updates.state !== undefined) payload.state = updates.state;
+      if (updates.assigned_to !== undefined) payload.assigned_to = updates.assigned_to;
+      if (updates.project_status !== undefined) payload.project_status = updates.project_status;
+
+      const { data, error } = await supabaseAdmin
+        .from('projects')
+        .update(payload)
+        .eq('id', id)
+        .select(`
+          *,
+          project_monitoring (*),
+          project_predictions (*),
+          alerts (*)
+        `)
+        .single();
+
+      if (error || !data) {
+        console.error('[SentinelDatabase] Error updating project:', error?.message);
+        throw new Error(`Failed to update project: ${error?.message}`);
+      }
+
+      return this.mapRowToProject(data);
+    } catch (err: any) {
+      console.error('[SentinelDatabase] Exception in updateProject:', err.message || err);
+      throw err;
+    }
   }
 
   /**

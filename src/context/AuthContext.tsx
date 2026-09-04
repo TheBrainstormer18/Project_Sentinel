@@ -15,7 +15,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isOfficer: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, selectedRole?: UserRole) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
@@ -115,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, selectedRole?: UserRole) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -123,21 +123,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
       });
 
-      if (error) {
-        throw new Error(error.message);
+      if (error || !data.session || !data.user) {
+        throw new Error('Invalid email or password.');
       }
 
-      if (data.session && data.user) {
-        const accessToken = data.session.access_token;
-        const userObj = await fetchProfileRole(
-          data.user.id,
-          data.user.email || email,
-          data.user.user_metadata?.name || 'User'
-        );
-        setUser(userObj);
-        setToken(accessToken);
-        saveAuthSession(accessToken, userObj);
+      const userObj = await fetchProfileRole(
+        data.user.id,
+        data.user.email || email,
+        data.user.user_metadata?.name || 'User'
+      );
+
+      if (selectedRole) {
+        if (selectedRole === 'admin' && userObj.role !== 'admin') {
+          await supabase.auth.signOut().catch(() => {});
+          clearAuthSession();
+          setUser(null);
+          setToken(null);
+          throw new Error('These credentials belong to a Project Officer account. Please select Officer.');
+        }
+
+        if (selectedRole === 'officer' && userObj.role === 'admin') {
+          await supabase.auth.signOut().catch(() => {});
+          clearAuthSession();
+          setUser(null);
+          setToken(null);
+          throw new Error('These credentials belong to an Administrator account. Please select Admin.');
+        }
       }
+
+      const accessToken = data.session.access_token;
+      setUser(userObj);
+      setToken(accessToken);
+      saveAuthSession(accessToken, userObj);
     } finally {
       setLoading(false);
     }

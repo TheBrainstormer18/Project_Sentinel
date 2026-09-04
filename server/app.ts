@@ -398,6 +398,24 @@ export function createExpressApp() {
   app.post('/api/projects', requireAdmin as any, handleCreateProject as any);
   app.post('/projects', requireAdmin as any, handleCreateProject as any);
 
+  // 3b. PATCH /projects/:id (Admin only: update project metadata & officer assignment)
+  const handleUpdateProject = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const updated = await db.updateProject(id, updates);
+      if (!updated) {
+        return res.status(404).json({ error: `Project not found with ID: ${id}` });
+      }
+      return res.json({ success: true, project: updated });
+    } catch (err: any) {
+      console.error('[PATCH /projects/:id Error]:', err.message);
+      res.status(500).json({ error: err.message || 'Failed to update project', code: 'DATABASE_ERROR' });
+    }
+  };
+  app.patch('/api/projects/:id', requireAdmin as any, handleUpdateProject as any);
+  app.patch('/projects/:id', requireAdmin as any, handleUpdateProject as any);
+
   // 4. GET /dashboard
   registerRoute('get', '/dashboard', async (req, res) => {
     try {
