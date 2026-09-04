@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
-import { supabase, isClientSupabaseConfigured } from '../services/supabaseClient';
+import { supabase } from '../services/supabaseClient';
 import {
   getStoredToken,
   getStoredUser,
@@ -116,11 +116,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    if (!isClientSupabaseConfigured) {
-      throw new Error(
-        'Supabase is not configured yet. Please add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env or Netlify settings.'
-      );
-    }
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -149,11 +144,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (name: string, email: string, password: string) => {
-    if (!isClientSupabaseConfigured) {
-      throw new Error(
-        'Supabase is not configured yet. Please add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env or Netlify settings.'
-      );
-    }
     setLoading(true);
     try {
       // New users strictly default to officer. User metadata passes the display name.
@@ -171,12 +161,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(error.message);
       }
 
-      if (data.user && !data.session) {
-        throw new Error(
-          'Account registered! Please check your email inbox to confirm your account, or disable "Confirm email" in your Supabase Auth settings to enable immediate login.'
-        );
-      }
-
       if (data.session && data.user) {
         const accessToken = data.session.access_token;
         const userObj = await fetchProfileRole(data.user.id, data.user.email || email, name);
@@ -190,11 +174,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetPassword = async (email: string) => {
-    if (!isClientSupabaseConfigured) {
-      throw new Error(
-        'Supabase is not configured yet. Please add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env or Netlify settings.'
-      );
-    }
     const redirectTo = `${window.location.origin}/reset-password`;
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo,
@@ -225,48 +204,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginDemo = async () => {
     setLoading(true);
-    let demoUser: User = {
-      id: 'usr-demo',
-      name: 'Demo Officer',
-      email: 'demo@projectsentinel.ai',
-      role: 'officer',
-      created_at: new Date().toISOString(),
-    };
-    let demoToken = 'demo-session-token';
-
     try {
       const res = await fetch('/api/auth/demo-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.user) {
-          demoUser = data.user;
-        }
-        if (data.access_token) {
-          demoToken = data.access_token;
-          if (data.refresh_token && data.access_token !== 'demo-local-fallback-token') {
-            try {
-              await supabase.auth.setSession({
-                access_token: data.access_token,
-                refresh_token: data.refresh_token,
-              });
-            } catch (sbErr) {
-              console.warn('[AuthContext] Supabase setSession notice:', sbErr);
-            }
-          }
-        }
-      } else {
-        console.warn('[AuthContext] /api/auth/demo-login returned non-OK status, falling back to local demo session.');
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Demo login failed');
       }
-    } catch (err) {
-      console.warn('[AuthContext] Backend demo login endpoint unreachable, falling back to instant demo session:', err);
+
+      if (data.access_token && data.refresh_token && data.access_token !== 'demo-local-fallback-token') {
+        // Sync real Supabase Auth session on the client
+        try {
+          await supabase.auth.setSession({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+          });
+        } catch (sbErr) {
+          console.warn('[AuthContext] Supabase setSession notice:', sbErr);
+        }
+      }
+
+      setUser(data.user);
+      setToken(data.access_token);
+      saveAuthSession(data.access_token, data.user);
     } finally {
-      setUser(demoUser);
-      setToken(demoToken);
-      saveAuthSession(demoToken, demoUser);
       setLoading(false);
     }
   };

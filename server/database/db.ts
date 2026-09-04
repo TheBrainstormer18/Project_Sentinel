@@ -102,13 +102,13 @@ export class SentinelDatabase {
       const { data, error } = await query;
       if (error) {
         console.error('[SentinelDatabase] Error fetching projects from Supabase:', error.message);
-        return [];
+        throw new Error(`Database query error: ${error.message}. Please ensure schema.sql has been executed in Supabase.`);
       }
 
       return (data || []).map((row: any) => this.mapRowToProject(row));
     } catch (err: any) {
       console.error('[SentinelDatabase] Exception fetching projects:', err.message || err);
-      return [];
+      throw err;
     }
   }
 
@@ -174,9 +174,12 @@ export class SentinelDatabase {
   /**
    * Fetches early warning alerts filtered by user project visibility
    */
-  public async getAllAlerts(user?: UserContext): Promise<Alert[]> {
+  public async getAllAlerts(status?: string, user?: UserContext): Promise<Alert[]> {
     if (!isSupabaseConfigured) {
-      const list = Array.from(this.fallbackAlerts.values());
+      let list = Array.from(this.fallbackAlerts.values());
+      if (status) {
+        list = list.filter((a) => a.status === status);
+      }
       return list.sort((a, b) => b.created_at.localeCompare(a.created_at));
     }
 
@@ -193,6 +196,10 @@ export class SentinelDatabase {
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (status) {
+        query = query.eq('status', status);
+      }
+
       if (allowedProjectIds !== null) {
         if (allowedProjectIds.length === 0) return [];
         query = query.in('project_id', allowedProjectIds);
@@ -201,7 +208,7 @@ export class SentinelDatabase {
       const { data, error } = await query;
       if (error) {
         console.error('[SentinelDatabase] Error fetching alerts:', error.message);
-        return [];
+        throw new Error(`Database query error: ${error.message}. Please ensure schema.sql has been executed in Supabase.`);
       }
 
       return (data || []).map((a: any) => ({
@@ -500,7 +507,7 @@ export class SentinelDatabase {
    */
   public async getDashboardSummary(user?: UserContext): Promise<DashboardSummary> {
     const projects = await this.getAllProjects(user);
-    const alerts = await this.getAllAlerts(user);
+    const alerts = await this.getAllAlerts(undefined, user);
 
     let high_risk_projects = 0;
     let delay_risk_projects = 0;
