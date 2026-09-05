@@ -5,6 +5,7 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+  included_files = ["server/ml/artifacts/**"]
 
 # Proxy all /api/* calls to Netlify Serverless Function
 [[redirects]]

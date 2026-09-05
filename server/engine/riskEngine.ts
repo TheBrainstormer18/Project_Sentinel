@@ -100,55 +100,64 @@ export function calculate_risk_score(
     risk_level = 'LOW';
   }
 
-  // 5. Generate Transparent Explainable Factors
-  const top_risk_factors: string[] = [];
-  const feature_contributions: FeatureContribution[] = [];
+  // 5. Generate Transparent Explainable Factors (SHAP TreeExplainer + Rule Synthesis)
+  const top_risk_factors: string[] =
+    mlResults.top_risk_factors && mlResults.top_risk_factors.length > 0
+      ? [...mlResults.top_risk_factors]
+      : [];
+  const feature_contributions: FeatureContribution[] =
+    mlResults.feature_contributions && mlResults.feature_contributions.length > 0
+      ? [...mlResults.feature_contributions]
+      : [];
 
-  // Factor 1: Progress Gap explanation
-  if (features.progress_gap >= 15) {
-    top_risk_factors.push(
-      `Physical progress is only ${monitoring.physical_progress}% while financial progress has reached ${features.financial_progress}% (+${features.progress_gap}% gap).`
-    );
-    feature_contributions.push({
-      feature: 'Progress Gap (Disbursement vs Physical)',
-      value: `+${features.progress_gap}%`,
-      impact: 0.35,
-      explanation: 'High capital outlay without commensurate ground work increases non-performance vulnerability.',
-    });
-  } else if (monitoring.physical_progress < 30) {
-    top_risk_factors.push(`Early-stage execution: Physical progress is currently at ${monitoring.physical_progress}%.`);
-    feature_contributions.push({
-      feature: 'Physical Progress Stage',
-      value: `${monitoring.physical_progress}%`,
-      impact: 0.15,
-      explanation: 'Initial mobilization phase with foundational work remaining.',
-    });
-  }
+  // If ML engine did not provide factors (fallback), compute rule-driven factors
+  if (top_risk_factors.length === 0) {
+    // Factor 1: Progress Gap explanation
+    if (features.progress_gap >= 15) {
+      top_risk_factors.push(
+        `Physical progress is only ${monitoring.physical_progress}% while financial progress has reached ${features.financial_progress}% (+${features.progress_gap}% gap).`
+      );
+      feature_contributions.push({
+        feature: 'Progress Gap (Disbursement vs Physical)',
+        value: `+${features.progress_gap}%`,
+        impact: 0.35,
+        explanation: 'High capital outlay without commensurate ground work increases non-performance vulnerability.',
+      });
+    } else if (monitoring.physical_progress < 30) {
+      top_risk_factors.push(`Early-stage execution: Physical progress is currently at ${monitoring.physical_progress}%.`);
+      feature_contributions.push({
+        feature: 'Physical Progress Stage',
+        value: `${monitoring.physical_progress}%`,
+        impact: 0.15,
+        explanation: 'Initial mobilization phase with foundational work remaining.',
+      });
+    }
 
-  // Factor 2: Cost Growth explanation
-  if (features.cost_overrun_pct > 0) {
-    top_risk_factors.push(
-      `Revised cost has increased by ₹${features.cost_growth.toLocaleString()} Cr (+${features.cost_overrun_pct}% overrun).`
-    );
-    feature_contributions.push({
-      feature: 'Cost Escalation',
-      value: `+${features.cost_overrun_pct}%`,
-      impact: features.cost_overrun_pct > 20 ? 0.30 : 0.18,
-      explanation: 'Budgetary expansion pressures government allocation and contractor cashflow.',
-    });
-  }
+    // Factor 2: Cost Growth explanation
+    if (features.cost_overrun_pct > 0) {
+      top_risk_factors.push(
+        `Revised cost has increased by ₹${features.cost_growth.toLocaleString()} Cr (+${features.cost_overrun_pct}% overrun).`
+      );
+      feature_contributions.push({
+        feature: 'Cost Escalation',
+        value: `+${features.cost_overrun_pct}%`,
+        impact: features.cost_overrun_pct > 20 ? 0.30 : 0.18,
+        explanation: 'Budgetary expansion pressures government allocation and contractor cashflow.',
+      });
+    }
 
-  // Factor 3: Timeline extensions
-  if (features.timeline_revision_months > 0) {
-    top_risk_factors.push(
-      `Completion timeline revised by +${features.timeline_revision_months} months (New target: ${monitoring.revised_completion_date}).`
-    );
-    feature_contributions.push({
-      feature: 'Timeline Slippage',
-      value: `+${features.timeline_revision_months} months`,
-      impact: features.timeline_revision_months > 12 ? 0.28 : 0.16,
-      explanation: 'Schedule extension compounds overhead costs and prolonged traffic/environmental disruption.',
-    });
+    // Factor 3: Timeline extensions
+    if (features.timeline_revision_months > 0) {
+      top_risk_factors.push(
+        `Completion timeline revised by +${features.timeline_revision_months} months (New target: ${monitoring.revised_completion_date}).`
+      );
+      feature_contributions.push({
+        feature: 'Timeline Slippage',
+        value: `+${features.timeline_revision_months} months`,
+        impact: features.timeline_revision_months > 12 ? 0.28 : 0.16,
+        explanation: 'Schedule extension compounds overhead costs and prolonged traffic/environmental disruption.',
+      });
+    }
   }
 
   // Add rule-based reasons if not already represented

@@ -1,0 +1,176 @@
+{
+  "version": "v1.0",
+  "generated_at": "2026-09-05T08:18:54.510779+00:00",
+  "dataset_info": {
+    "total_observations": 3019,
+    "total_projects": 1000,
+    "train_samples": 2087,
+    "val_samples": 464,
+    "test_samples": 468,
+    "data_type": "SYNTHETIC",
+    "calibration_standard": "MoSPI IPMD Infrastructure Flash Reports"
+  },
+  "delay_models": [
+    {
+      "model_name": "XGBoost Classifier (Production)",
+      "model_type": "Main",
+      "target": "Delay Risk Prediction",
+      "accuracy": 0.8868,
+      "precision": 0.8982,
+      "recall": 0.8065,
+      "f1_score": 0.8499,
+      "roc_auc": 0.95,
+      "pr_auc": 0.9414,
+      "brier_score": 0.084,
+      "sample_size": 468,
+      "selected_for_production": true,
+      "notes": "Gradient boosted decision trees handle non-linear execution divergence and complex multi-agency bottlenecks."
+    },
+    {
+      "model_name": "Logistic Regression (Baseline)",
+      "model_type": "Baseline",
+      "target": "Delay Risk Prediction",
+      "accuracy": 0.8483,
+      "precision": 0.8616,
+      "recall": 0.7366,
+      "f1_score": 0.7942,
+      "roc_auc": 0.9146,
+      "pr_auc": 0.9057,
+      "brier_score": 0.11,
+      "sample_size": 468,
+      "selected_for_production": false,
+      "notes": "Linear decision boundary under-predicts complex multi-contractor delays and sudden milestone stalls."
+    }
+  ],
+  "cost_models": [
+    {
+      "model_name": "XGBoost Regressor (Production)",
+      "model_type": "Main",
+      "target": "Cost Overrun Prediction",
+      "mae": 2.78,
+      "rmse": 4.13,
+      "r2_score": 0.8374,
+      "medae": 1.92,
+      "sample_size": 468,
+      "selected_for_production": true,
+      "notes": "Captures compounding cost escalations resulting from prolonged schedule slippage and scope revisions."
+    },
+    {
+      "model_name": "Ridge Regression (Baseline)",
+      "model_type": "Baseline",
+      "target": "Cost Overrun Prediction",
+      "mae": 4.02,
+      "rmse": 5.29,
+      "r2_score": 0.7335,
+      "medae": 3.11,
+      "sample_size": 468,
+      "selected_for_production": false,
+      "notes": "L2 regularized linear model assumes proportional cost growth; underfits non-linear escalations."
+    }
+  ],
+  "feature_importance": [
+    {
+      "feature_name": "Timeline Revision (Months)",
+      "raw_feature": "timeline_revision_months",
+      "importance": 0.3016,
+      "category": "Schedule Drift"
+    },
+    {
+      "feature_name": "Progress Gap (Financial - Physical)",
+      "raw_feature": "progress_gap",
+      "importance": 0.1629,
+      "category": "Execution Divergence"
+    },
+    {
+      "feature_name": "Historical Cost Escalation %",
+      "raw_feature": "cost_overrun_pct",
+      "importance": 0.1384,
+      "category": "Financial Momentum"
+    },
+    {
+      "feature_name": "Physical Progress Velocity",
+      "raw_feature": "physical_velocity",
+      "importance": 0.1354,
+      "category": "Milestone Velocity"
+    },
+    {
+      "feature_name": "Physical Progress %",
+      "raw_feature": "physical_progress_pct",
+      "importance": 0.0621,
+      "category": "Milestone Velocity"
+    },
+    {
+      "feature_name": "Sector Risk Weight",
+      "raw_feature": "sector",
+      "importance": 0.046,
+      "category": "Domain Sector"
+    },
+    {
+      "feature_name": "Remaining Work Scope",
+      "raw_feature": "remaining_work_pct",
+      "importance": 0.0448,
+      "category": "Milestone Velocity"
+    },
+    {
+      "feature_name": "Sanctioned Baseline Cost",
+      "raw_feature": "original_cost_cr",
+      "importance": 0.0212,
+      "category": "Project Scale"
+    },
+    {
+      "feature_name": "Disbursement Burn Rate",
+      "raw_feature": "financial_burn_rate",
+      "importance": 0.0174,
+      "category": "Disbursement Outlay"
+    },
+    {
+      "feature_name": "Contracting Mechanism Risk",
+      "raw_feature": "contract_type",
+      "importance": 0.0165,
+      "category": "Procurement Risk"
+    },
+    {
+      "feature_name": "Cumulative Expenditure",
+      "raw_feature": "expenditure_cr",
+      "importance": 0.0116,
+      "category": "Project Scale"
+    },
+    {
+      "feature_name": "Cost Growth (\u20b9 Cr)",
+      "raw_feature": "cost_growth_cr",
+      "importance": 0.0113,
+      "category": "Budget Escalation"
+    },
+    {
+      "feature_name": "Project Age (Months Active)",
+      "raw_feature": "project_age_months",
+      "importance": 0.0099,
+      "category": "Longevity Drift"
+    },
+    {
+      "feature_name": "Financial Progress %",
+      "raw_feature": "financial_progress_pct",
+      "importance": 0.0079,
+      "category": "Disbursement Outlay"
+    },
+    {
+      "feature_name": "Terrain Topography Complexity",
+      "raw_feature": "terrain_type",
+      "importance": 0.0071,
+      "category": "Topographical Risk"
+    },
+    {
+      "feature_name": "Approved Revised Cost",
+      "raw_feature": "revised_cost_cr",
+      "importance": 0.006,
+      "category": "Project Scale"
+    }
+  ],
+  "selected_delay_model": "XGBoost Classifier",
+  "selected_cost_model": "XGBoost Regressor",
+  "justification": "XGBoost Classifier achieved superior discriminative performance on the test set (ROC-AUC 0.950 vs 0.915 baseline, F1 0.850 vs 0.794). XGBoost Regressor reduced cost prediction MAE from 4.02% to 2.78% with R\u00b2 of 0.837.",
+  "training_sample_count": 2087,
+  "test_sample_count": 468,
+  "validation_accuracy": 0.8868,
+  "last_trained": "2026-09-05"
+}

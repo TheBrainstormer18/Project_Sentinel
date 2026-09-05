@@ -260,6 +260,12 @@ export const ProjectDetail: React.FC = () => {
               <span>Progress Gap Weight (20%):</span>
               <span className="font-mono text-slate-900 font-bold">+{feat?.progress_gap}%</span>
             </div>
+            {pred?.delay_model_used && (
+              <div className="pt-2 border-t border-slate-200/60 text-[10px] text-slate-500 flex items-center justify-between">
+                <span>ML Model Engine:</span>
+                <span className="font-semibold text-blue-700">{pred.delay_model_used}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -270,7 +276,7 @@ export const ProjectDetail: React.FC = () => {
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert className="h-5 w-5 text-rose-600" />
               <h2 className="text-base font-bold text-slate-900">
-                Why is this project risky? (Explainable AI)
+                Why is this project risky? (Explainable AI / SHAP)
               </h2>
             </div>
 

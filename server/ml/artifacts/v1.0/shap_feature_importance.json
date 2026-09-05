@@ -1,0 +1,98 @@
+[
+  {
+    "feature_name": "Timeline Revision (Months)",
+    "raw_feature": "timeline_revision_months",
+    "importance": 0.3016,
+    "category": "Schedule Drift"
+  },
+  {
+    "feature_name": "Progress Gap (Financial - Physical)",
+    "raw_feature": "progress_gap",
+    "importance": 0.1629,
+    "category": "Execution Divergence"
+  },
+  {
+    "feature_name": "Historical Cost Escalation %",
+    "raw_feature": "cost_overrun_pct",
+    "importance": 0.1384,
+    "category": "Financial Momentum"
+  },
+  {
+    "feature_name": "Physical Progress Velocity",
+    "raw_feature": "physical_velocity",
+    "importance": 0.1354,
+    "category": "Milestone Velocity"
+  },
+  {
+    "feature_name": "Physical Progress %",
+    "raw_feature": "physical_progress_pct",
+    "importance": 0.0621,
+    "category": "Milestone Velocity"
+  },
+  {
+    "feature_name": "Sector Risk Weight",
+    "raw_feature": "sector",
+    "importance": 0.046,
+    "category": "Domain Sector"
+  },
+  {
+    "feature_name": "Remaining Work Scope",
+    "raw_feature": "remaining_work_pct",
+    "importance": 0.0448,
+    "category": "Milestone Velocity"
+  },
+  {
+    "feature_name": "Sanctioned Baseline Cost",
+    "raw_feature": "original_cost_cr",
+    "importance": 0.0212,
+    "category": "Project Scale"
+  },
+  {
+    "feature_name": "Disbursement Burn Rate",
+    "raw_feature": "financial_burn_rate",
+    "importance": 0.0174,
+    "category": "Disbursement Outlay"
+  },
+  {
+    "feature_name": "Contracting Mechanism Risk",
+    "raw_feature": "contract_type",
+    "importance": 0.0165,
+    "category": "Procurement Risk"
+  },
+  {
+    "feature_name": "Cumulative Expenditure",
+    "raw_feature": "expenditure_cr",
+    "importance": 0.0116,
+    "category": "Project Scale"
+  },
+  {
+    "feature_name": "Cost Growth (\u20b9 Cr)",
+    "raw_feature": "cost_growth_cr",
+    "importance": 0.0113,
+    "category": "Budget Escalation"
+  },
+  {
+    "feature_name": "Project Age (Months Active)",
+    "raw_feature": "project_age_months",
+    "importance": 0.0099,
+    "category": "Longevity Drift"
+  },
+  {
+    "feature_name": "Financial Progress %",
+    "raw_feature": "financial_progress_pct",
+    "importance": 0.0079,
+    "category": "Disbursement Outlay"
+  },
+  {
+    "feature_name": "Terrain Topography Complexity",
+    "raw_feature": "terrain_type",
+    "importance": 0.0071,
+    "category": "Topographical Risk"
+  },
+  {
+    "feature_name": "Approved Revised Cost",
+    "raw_feature": "revised_cost_cr",
+    "importance": 0.006,
+    "category": "Project Scale"
+  }
+]

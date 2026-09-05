@@ -29,6 +29,7 @@ export interface ProjectMonitoringData {
   id: string;
   project_id: string;
   update_date: string; // YYYY-MM
+  as_of_date?: string;
   original_cost: number; // in Crores / Millions
   revised_cost: number;
   expenditure: number;
@@ -114,8 +115,18 @@ export interface ModelInsightsData {
   selected_cost_model: string;
   justification: string;
   training_sample_count: number;
+  test_sample_count?: number;
   validation_accuracy: number;
   last_trained: string;
+  dataset_info?: {
+    total_observations: number;
+    total_projects: number;
+    train_samples: number;
+    val_samples: number;
+    test_samples: number;
+    data_type: string;
+    calibration_standard: string;
+  };
 }
 
 export interface RiskTrendDataPoint {

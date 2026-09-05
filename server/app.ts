@@ -559,7 +559,7 @@ export function createExpressApp() {
         insights,
         system_status: {
           database: isSupabaseConfigured ? 'Supabase PostgreSQL' : 'Local Standalone',
-          ml_engine: 'Random Forest Ensemble v2.4 Active',
+          ml_engine: 'XGBoost & TreeSHAP Production Engine Active (v1.0)',
           risk_engine: 'Hybrid 4-Vector Risk Engine Active',
           data_pipeline: 'MoSPI/PAIMANA Compliant',
         },
@@ -579,29 +579,7 @@ export function createExpressApp() {
     }
   });
 
-  // 10. POST /predict/:project_id
-  const handlePredict = async (req: Request, res: Response) => {
-    try {
-      const { project_id } = req.params;
-      const updatedProject = await db.recalculateProject(project_id);
-      if (!updatedProject) {
-        return res.status(404).json({ error: `Project not found with ID: ${project_id}` });
-      }
-      res.json({
-        success: true,
-        project: updatedProject,
-        prediction: updatedProject.prediction,
-        features: updatedProject.features,
-        alerts: updatedProject.alerts,
-      });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message, code: 'DATABASE_ERROR' });
-    }
-  };
-  app.post('/api/predict/:project_id', handlePredict);
-  app.post('/predict/:project_id', handlePredict);
-
-  // 11. POST /predict/simulate
+  // 10. POST /predict/simulate (MUST be registered before /predict/:project_id wildcard)
   const handleSimulate = (req: Request, res: Response) => {
     try {
       const {
@@ -646,6 +624,28 @@ export function createExpressApp() {
   };
   app.post('/api/predict/simulate', handleSimulate);
   app.post('/predict/simulate', handleSimulate);
+
+  // 11. POST /predict/:project_id
+  const handlePredict = async (req: Request, res: Response) => {
+    try {
+      const { project_id } = req.params;
+      const updatedProject = await db.recalculateProject(project_id);
+      if (!updatedProject) {
+        return res.status(404).json({ error: `Project not found with ID: ${project_id}` });
+      }
+      res.json({
+        success: true,
+        project: updatedProject,
+        prediction: updatedProject.prediction,
+        features: updatedProject.features,
+        alerts: updatedProject.alerts,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message, code: 'DATABASE_ERROR' });
+    }
+  };
+  app.post('/api/predict/:project_id', handlePredict);
+  app.post('/predict/:project_id', handlePredict);
 
   // 12. POST /api/chat and POST /chat
   const handleChat = async (req: Request, res: Response) => {

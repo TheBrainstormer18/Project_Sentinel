@@ -118,15 +118,43 @@ export const ModelInsights: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800 border border-blue-200">
-              Scikit-Learn ML Benchmark Matrix
+              MoSPI IPMD • XGBoost & Scikit-Learn Benchmark Matrix
+            </span>
+            <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200">
+              SYNTHETIC CALIBRATED BENCHMARK
             </span>
           </div>
           <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             AI Model Architecture & Validation Insights
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Empirical validation comparing Baseline vs Main Ensemble classifiers on historical infrastructure benchmarks
+            Empirical validation comparing Baseline vs Production Gradient-Boosted Decision Trees on infrastructure risk benchmarks
           </p>
+        </div>
+      </div>
+
+      {/* Dataset & Methodology Banner */}
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="rounded-lg bg-blue-100 p-2 text-blue-700 font-bold shrink-0">
+            DATASET
+          </div>
+          <div>
+            <span className="font-bold text-slate-800">
+              MoSPI Infrastructure Project Risk Benchmark Dataset (Calibrated Synthetic)
+            </span>
+            <p className="text-slate-500 mt-0.5">
+              1,000 infrastructure projects across 6 national sectors with 3,019 multi-milestone snapshots. Partitioned by project ID to ensure zero data leakage.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0 text-[11px] font-semibold text-slate-700">
+          <span className="bg-white px-2.5 py-1 rounded-md border border-slate-200">
+            Train: {data.training_sample_count} obs
+          </span>
+          <span className="bg-white px-2.5 py-1 rounded-md border border-slate-200">
+            Test: {data.test_sample_count || data.delay_models[0]?.sample_size || 468} obs
+          </span>
         </div>
       </div>
 
@@ -144,11 +172,13 @@ export const ModelInsights: React.FC = () => {
               "{data.justification}"
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-300">
-              <span>Sample Validation Size: <strong>{data.training_sample_count} Projects</strong></span>
+              <span>Training Samples: <strong>{data.training_sample_count}</strong></span>
+              <span>•</span>
+              <span>Test Benchmark Samples: <strong>{data.test_sample_count || data.delay_models[0]?.sample_size || 468}</strong></span>
               <span>•</span>
               <span>Validation Accuracy: <strong>{(data.validation_accuracy * 100).toFixed(1)}%</strong></span>
               <span>•</span>
-              <span>Ensemble: <strong>Random Forest Classifier v2.4</strong></span>
+              <span>Production Stack: <strong>{data.selected_delay_model} & {data.selected_cost_model}</strong></span>
             </div>
           </div>
         </div>
@@ -164,7 +194,7 @@ export const ModelInsights: React.FC = () => {
               <h2 className="text-base font-bold text-slate-900">A. Delay Risk Prediction</h2>
             </div>
             <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-200">
-              RF Selected
+              {data.selected_delay_model.includes('XGBoost') ? 'XGBoost Active' : 'Production Active'}
             </span>
           </div>
 
@@ -215,7 +245,8 @@ export const ModelInsights: React.FC = () => {
             </table>
           </div>
           <p className="mt-3 text-[11px] text-slate-500 leading-snug">
-            Random Forest achieves +9.8% higher accuracy and captures complex non-linear delay triggers compared to baseline Logistic Regression.
+            {data.delay_models[0]?.notes ||
+              'XGBoost Classifier captures complex non-linear milestone execution divergence and terrain friction compared to baseline Logistic Regression.'}
           </p>
         </div>
 
@@ -224,10 +255,10 @@ export const ModelInsights: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Regression Target</span>
-              <h2 className="text-base font-bold text-slate-900">B. Cost Escalation Prediction</h2>
+              <h2 className="text-base font-bold text-slate-900">B. Cost Escalation Prediction (% Overrun)</h2>
             </div>
             <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-200">
-              RF Regressor Selected
+              {data.selected_cost_model.includes('XGBoost') ? 'XGBoost Active' : 'Production Active'}
             </span>
           </div>
 
@@ -236,8 +267,8 @@ export const ModelInsights: React.FC = () => {
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 font-bold">
                   <th className="py-2.5 px-3">Model</th>
-                  <th className="py-2.5 px-3">MAE (Cr)</th>
-                  <th className="py-2.5 px-3">RMSE</th>
+                  <th className="py-2.5 px-3">MAE (%)</th>
+                  <th className="py-2.5 px-3">RMSE (%)</th>
                   <th className="py-2.5 px-3">R² Score</th>
                   <th className="py-2.5 px-3">Status</th>
                 </tr>
@@ -256,8 +287,8 @@ export const ModelInsights: React.FC = () => {
                         <span className="text-slate-900">{m.model_name}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-3 font-bold text-slate-900">{m.mae}</td>
-                    <td className="py-3 px-3 text-slate-700">{m.rmse}</td>
+                    <td className="py-3 px-3 font-bold text-slate-900">{m.mae}%</td>
+                    <td className="py-3 px-3 text-slate-700">{m.rmse}%</td>
                     <td className="py-3 px-3 font-bold text-emerald-700">{m.r2_score}</td>
                     <td className="py-3 px-3">
                       <span
@@ -276,7 +307,8 @@ export const ModelInsights: React.FC = () => {
             </table>
           </div>
           <p className="mt-3 text-[11px] text-slate-500 leading-snug">
-            Random Forest Regressor reduces Mean Absolute Error by 49% and yields an R² score of 0.884 on test benchmarks.
+            {data.cost_models[0]?.notes ||
+              'XGBoost Regressor captures non-linear compounding cost escalations resulting from prolonged schedule slippage.'}
           </p>
         </div>
       </div>
@@ -285,9 +317,9 @@ export const ModelInsights: React.FC = () => {
       <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Random Forest Feature Importance Weights</h2>
+            <h2 className="text-base font-bold text-slate-900">Global Feature Importance (SHAP TreeExplainer)</h2>
             <p className="text-xs text-slate-500">
-              Gini impurity reduction & split significance across decision trees
+              Normalized mean absolute Shapley value contribution across multi-sector test observations
             </p>
           </div>
         </div>
@@ -308,7 +340,7 @@ export const ModelInsights: React.FC = () => {
                 width={170}
               />
               <Tooltip
-                formatter={(val: any) => [`${val}%`, 'Split Contribution']}
+                formatter={(val: any) => [`${val}%`, 'Global Impact (SHAP)']}
                 contentStyle={{
                   backgroundColor: '#0f172a',
                   borderRadius: '10px',
